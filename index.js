@@ -1,3 +1,5 @@
+var https = require('https');
+var fs = require('fs');
 var express = require('express');
 var app = express();
 var cookieParser = require('cookie-parser');
@@ -13,6 +15,7 @@ var gateway = braintree.connect({
   merchantId : "",
   publicKey : "",
   privateKey : ""
+
 });
 
 var auth_sessions = {};
@@ -95,9 +98,7 @@ function CreateTransaction(client_amount, nonceFromTheClient, res) {
           });
 }
 
-var server = app.listen(9001, "0.0.0.0", function() {
-  var host = server.address().address;
-  var port = server.address().port;
-
-  console.log('Example app listening at http://%s:%s', host, port);
-});
+var server = https.createServer(
+        {key: fs.readFileSync('key.pem'), cert: fs.readFileSync('cert.pem')},
+        app);
+server.listen(9001);

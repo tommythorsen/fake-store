@@ -1,27 +1,51 @@
 'use strict';
 
-var supportedInstruments = [ "braintree" ];
-var details = {
-  "amount" : "2.99",
-  "currencyCode" : "USD",
-  "countryCode" : "US",
-  "requestShipping" : false,
-  "recurringCharge" : false
+var supportedMethods = [
+  "braintree",
+  "visa checkout"
+];
+
+var details = { // PaymentDetails
+  "items" : [
+    { // PaymentItem
+      "id" : "foo",
+      "label" : "24 hour subscription for only $2.99!",
+      "amount" : { // CurrencyAmount
+        "currencyCode" : "USD",
+        "value" : "2.99"
+      }
+    }
+  ],
+  "shippingOptions" : [
+    { // ShippingOption
+      "id" : "bar",
+      "label" : "Online purchase.",
+      "amount" : { // CurrencyAmount
+        "currencyCode" : "USD",
+        "value" : "0.00"
+      }
+    }
+  ]
 };
 
-// Optional identities for schemes/instruments
-var schemeData = {
+var options = { // PaymentOptions
+  "requestShipping" : false
+};
+
+var data = {
   "braintree" : {
     "token" : "",
   },
-};
+  "visa checkout" : {
+  }
+}
 
 function runPayments() {
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (xhttp.readyState == 4 && xhttp.status == 200) {
       var token = xhttp.responseText;
-      schemeData.braintree.token = token;
+      data.braintree.token = token;
       runPaymentRequest();
     }
   }
@@ -43,17 +67,14 @@ function runCheckout(nonce, amount) {
 }
 
 function runPaymentRequest() {
-  var promise = paymentRequest(supportedInstruments, details, schemeData);
-
-  promise.then(
-      function(instrumentResponse) {
-        if (instrumentResponse.instrumentDetails
-            && instrumentResponse.instrumentDetails != "") {
-          var instrument_details_json = JSON
-              .parse(instrumentResponse.instrumentDetails);
-          runCheckout(instrument_details_json.details.nonce, details.amount);
-        }
-      }).catch(function(err) {
-        alert("Uh oh, something bad happened", err.message);
+  var request = new PaymentRequest(supportedMethods, details, options, data);
+  request.show().then(function(paymentResponse) {
+    if (paymentResponse && paymentResponse != "") {
+      alert(paymentResponse);
+      var json = JSON.parse(paymentResponse);
+      runCheckout(json.details.nonce, request.details.items[0].amount.value);
+    }
+  }).catch(function(err) {
+    alert("Uh oh, something bad happened", err.message);
   });
 }
