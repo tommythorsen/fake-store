@@ -69,11 +69,7 @@ function runCheckout(nonce, amount) {
 function runPaymentRequest() {
   var request = new PaymentRequest(supportedMethods, details, options, data);
   request.show().then(function(paymentResponse) {
-    if (paymentResponse && paymentResponse != "") {
-      alert(paymentResponse);
-      var json = JSON.parse(paymentResponse);
-      runCheckout(json.details.nonce, request.details.items[0].amount.value);
-    }
+    runCheckout(paymentResponse.details.nonce, details.items[0].amount.value);
   }).catch(function(err) {
     alert("Uh oh, something bad happened", err.message);
   });
